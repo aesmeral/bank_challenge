@@ -9,12 +9,18 @@ import (
 )
 
 func CustomerIndex(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "we're in the customers",
-	})
+	var customers []models.Customer
+	initializers.DB.Find(&customers)
+
+	results := make([]map[string]interface{}, len(customers))
+	for index, customer := range customers {
+		results[index] = customer.CustomerSerializer()
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": results})
 }
 
-func ShowCustomer(c *gin.Context) {
+func CustomerShow(c *gin.Context) {
 	id := c.Params.ByName("id")
 
 	var customer models.Customer
@@ -28,6 +34,21 @@ func ShowCustomer(c *gin.Context) {
 	data := gin.H{"data": customer.CustomerSerializer()}
 
 	c.JSON(http.StatusOK, data)
+}
+
+func CustomerCreate(c *gin.Context) {
+	var body struct {
+		Balance int64
+		Limit   int64
+	}
+	c.Bind(&body)
+
+	customer := models.Customer{Limit: body.Limit, Balance: body.Balance}
+	result := initializers.DB.Create(&customer)
+
+	c.JSON(http.StatusOK, gin.H{
+		"created": result.RowsAffected,
+	})
 }
 
 func CustomerCreateInit(c *gin.Context) {
