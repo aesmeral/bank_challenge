@@ -9,5 +9,7 @@ func CustomerRoutes(r *gin.Engine) {
 	customers := r.Group("/customers")
 	{
 		customers.GET("/", controllers.CustomerIndex)
+		customers.GET("/:id", controllers.ShowCustomer)
+		customers.POST("/init", controllers.CustomerCreateInit)
 	}
 }
