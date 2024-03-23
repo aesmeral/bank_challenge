@@ -5,6 +5,7 @@ import (
 
 	"github.com/aesmeral/bank_challenge/initializers"
 	"github.com/aesmeral/bank_challenge/models"
+	"github.com/aesmeral/bank_challenge/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,24 +45,18 @@ func CustomerCreate(c *gin.Context) {
 	c.Bind(&body)
 
 	customer := models.Customer{Limit: body.Limit, Balance: body.Balance}
-	result := initializers.DB.Create(&customer)
+	initializers.DB.Create(&customer)
 
-	c.JSON(http.StatusOK, gin.H{
-		"created": result.RowsAffected,
-	})
+	c.JSON(http.StatusCreated, customer.CustomerSerializer())
 }
 
 func CustomerTransaction(c *gin.Context) {
 	id := c.Params.ByName("id")
 
-	var body struct {
-		Value       int64
-		Type        string
-		Description string
-	}
-	var customer models.Customer
+	var transaction services.TransactionData
+	c.Bind(&transaction)
 
-	c.Bind(&body)
+	var customer models.Customer
 	results := initializers.DB.First(&customer, id)
 
 	if results.Error != nil {
@@ -69,20 +64,12 @@ func CustomerTransaction(c *gin.Context) {
 		return
 	}
 
-	if body.Value <= 0 {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Value must be greater than 0"})
+	statement, error := transaction.ValidateAndPerform(customer)
+
+	if error != nil {
+		c.JSON(http.StatusUnprocessableEntity, statement)
 		return
 	}
 
-	if body.Type != "c" && body.Type != "d" {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Only types c and d are accepted"})
-		return
-	}
-
-	if len(body.Description) < 1 || len(body.Description) > 10 {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Description must be between 1 and 10 characters"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Transaction created"})
+	c.JSON(http.StatusCreated, statement)
 }
