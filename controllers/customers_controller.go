@@ -27,7 +27,7 @@ func CustomerShow(c *gin.Context) {
 	results := initializers.DB.First(&customer, id)
 
 	if results.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Record Not Found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "Customer Not Found"})
 		return
 	}
 
@@ -51,18 +51,38 @@ func CustomerCreate(c *gin.Context) {
 	})
 }
 
-func CustomerCreateInit(c *gin.Context) {
-	customers := []models.Customer{
-		{Limit: 100000, Balance: 0},
-		{Limit: 80000, Balance: 0},
-		{Limit: 1000000, Balance: 0},
-		{Limit: 10000000, Balance: 0},
-		{Limit: 500000, Balance: 0},
+func CustomerTransaction(c *gin.Context) {
+	id := c.Params.ByName("id")
+
+	var body struct {
+		Value       int64
+		Type        string
+		Description string
+	}
+	var customer models.Customer
+
+	c.Bind(&body)
+	results := initializers.DB.First(&customer, id)
+
+	if results.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Customer Not Found"})
+		return
 	}
 
-	result := initializers.DB.Create(customers)
+	if body.Value <= 0 {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Value must be greater than 0"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"created": result.RowsAffected,
-	})
+	if body.Type != "c" && body.Type != "d" {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Only types c and d are accepted"})
+		return
+	}
+
+	if len(body.Description) < 1 || len(body.Description) > 10 {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Description must be between 1 and 10 characters"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Transaction created"})
 }

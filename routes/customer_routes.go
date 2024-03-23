@@ -10,7 +10,7 @@ func CustomerRoutes(r *gin.Engine) {
 	{
 		customers.GET("/", controllers.CustomerIndex)
 		customers.GET("/:id", controllers.CustomerShow)
-		customers.POST("/init", controllers.CustomerCreateInit)
 		customers.POST("/", controllers.CustomerCreate)
+		customers.POST("/:id/transaction", controllers.CustomerTransaction)
 	}
 }

@@ -9,11 +9,9 @@ type Customer struct {
 }
 
 func (c Customer) CustomerSerializer() map[string]interface{} {
-	serializer := map[string]interface{}{
+	return map[string]interface{}{
 		"id":      c.ID,
 		"limit":   c.Limit,
 		"balance": c.Balance,
 	}
-
-	return serializer
 }
